@@ -1,0 +1,143 @@
+# Link2Kaggle&Colab example configuration.
+# Copy this file locally if you need overrides. It stores references only.
+# Never put tokens, passwords, client secrets, or key material in this file.
+# Use credential_ref or api_key_env (an environment variable name), not the secret.
+
+# Runtime mode. Default is mock: no real Kaggle or Colab account, and no network.
+# `real` must be set explicitly. It is never implied by a missing key.
+# Real GPU jobs additionally require `allow_real_jobs: true`.
+# Both switches are independent: mode real without allow_real_jobs must not
+# submit GPU work, and allow_real_jobs without mode real must not leave mock.
+mode: mock
+allow_real_jobs: false
+
+providers:
+  kaggle:
+    enabled: true
+    # Executable name or path of the official Kaggle CLI.
+    cli_path: kaggle
+    # Kernel owner slug. This is not a secret. Leave null to omit it.
+    username: null
+    # Pointer only. The token itself stays in the environment.
+    credential_ref: env:KAGGLE_API_TOKEN
+    api_key_env: KAGGLE_API_TOKEN
+    # Maximum wait for `kaggle kernels push` when the job omits timeout_seconds.
+    # This bounds the push command itself. It is not the kernel run limit (`-t`).
+    # 300 seconds stops a hung push from waiting forever.
+    default_push_timeout_seconds: 300
+    # Maximum wait for `kaggle kernels output`. 600 seconds leaves room for
+    # large logs and artifacts. A fixed 120 second wait was too short.
+    download_timeout_seconds: 600
+  colab:
+    enabled: true
+    # Official google-colab-cli entry point.
+    cli_path: colab
+    # Matches `colab --auth {oauth2,adc}`. The CLI default is adc.
+    auth: adc
+    credential_ref: adc:default
+    # When false, submit always calls `colab stop` so the runtime cannot keep
+    # spending compute units. Set true only to debug a live session.
+    keep_runtime: false
+    # Maximum `colab exec` wait when a job omits timeout_seconds.
+    # 21600 seconds is 6 hours. A hung exec cannot hold a paid runtime open.
+    default_exec_timeout_seconds: 21600
+    # Undocumented Colab ccu-info HTTP. Default false: use `colab usage` only.
+    # Enable with true and/or env L2KC_COLAB_EXPERIMENTAL_CCU_INFO=1.
+    experimental_ccu_info: false
+  fake:
+    # In-process local executor for mock mode and tests.
+    enabled: true
+
+mock:
+  # Selectors for TEST FIXTURE scenarios. They are not live account state.
+  kaggle_scenario: ok
+  colab_scenario: ok
+
+# Job metadata directory. Override with the L2KC_STATE_DIR environment variable.
+state_dir: ~/.l2kc
+
+# Placement. cost_priority is a cost preference (free Kaggle quota first, then
+# cheaper Colab GPUs), not a performance ranking.
+# ccu_rates are unverified estimates. Google publishes no fixed consumer Colab
+# CCU rate; the live number is the Colab UI or `colab usage`.
+# CCU (compute units) and GPU-hours are different units and are never compared.
+# colab:H100 has no default rate. An unknown rate is refused, not guessed.
+# Colab TPU (colab:TPU-v5e1 / colab:TPU-v6e1) and +high_mem rate keys are
+# unverified fixture estimates in code defaults; override here after checking
+# `colab usage`. high_mem does not bypass allow_premium_gpu.
+# unknown_kaggle_quota applies to the free Kaggle backend only. An unknown paid
+# Colab balance is always skipped and is not configurable.
+scheduler:
+  strategy: kaggle_first
+  allow_colab_fallback: true
+  allow_premium_gpu: false
+  require_premium_confirmation: true
+  min_colab_ccu_reserve: 50
+  max_ccu_per_job: 20
+  unknown_kaggle_quota: warn
+  cost_priority:
+    - "kaggle:T4x2"
+    - "colab:T4"
+    - "colab:L4"
+    - "colab:A100-40GB"
+    - "colab:A100-80GB"
+  ccu_rates:
+    "colab:T4":
+      ccu_per_hour: 1.19
+      source: "unverified estimate: third-party report https://mccormickml.com/2024/04/23/colab-gpus-features-and-pricing/ (checked 2026-03-10); Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:L4":
+      ccu_per_hour: 1.71
+      source: "unverified estimate: third-party report https://mccormickml.com/2024/04/23/colab-gpus-features-and-pricing/ (checked 2026-03-10); Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:A100-40GB":
+      ccu_per_hour: 5.40
+      source: "unverified estimate: third-party report https://mccormickml.com/2024/04/23/colab-gpus-features-and-pricing/ (checked 2026-03-10); Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:A100-80GB":
+      ccu_per_hour: 7.52
+      source: "unverified estimate: third-party report https://mccormickml.com/2024/04/23/colab-gpus-features-and-pricing/ (checked 2026-03-10); Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:T4+high_mem":
+      ccu_per_hour: 1.45
+      source: "unverified fixture estimate: high-mem shape uplift over the base accelerator rate; Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:A100-40GB+high_mem":
+      ccu_per_hour: 6.50
+      source: "unverified fixture estimate: high-mem shape uplift over the base accelerator rate; Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:A100-80GB+high_mem":
+      ccu_per_hour: 9.00
+      source: "unverified fixture estimate: high-mem shape uplift over the base accelerator rate; Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:TPU-v5e1":
+      ccu_per_hour: 4.50
+      source: "unverified fixture estimate: Colab TPU CCU rate; Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+    "colab:TPU-v6e1":
+      ccu_per_hour: 6.00
+      source: "unverified fixture estimate: Colab TPU CCU rate; Google publishes no fixed consumer Colab CCU rate; confirm with `colab usage`"
+      verified: false
+
+# How long a quota snapshot may be reused. 0 disables caching.
+quota:
+  cache_ttl_seconds: 300
+
+# Async job manager. Submit and cancel are each attempted once.
+# status, logs, and download may retry. Delays are full jitter, not a fixed sleep.
+# The effective submit wait is submit_timeout_seconds plus the job's
+# timeout_seconds (0 when the job omits it). Colab submit runs the script
+# synchronously inside that wait.
+# A SUBMITTING row with no provider id is treated as an interrupted submit
+# once it is older than stale_submitting_seconds. It is not resubmitted.
+jobs:
+  submit_timeout_seconds: 300
+  status_timeout_seconds: 60
+  logs_timeout_seconds: 60
+  download_timeout_seconds: 600
+  cancel_timeout_seconds: 120
+  retry_max_attempts: 4
+  retry_base_delay_seconds: 0.5
+  retry_max_delay_seconds: 8.0
+  reconcile_concurrency: 4
+  stale_submitting_seconds: 900

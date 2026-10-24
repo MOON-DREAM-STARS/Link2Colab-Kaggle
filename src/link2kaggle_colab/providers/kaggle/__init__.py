@@ -1,0 +1,1 @@
+"""Kaggle provider adapter."""

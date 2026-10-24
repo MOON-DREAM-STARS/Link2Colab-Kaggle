@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "link2kaggle-colab"
+version = "1.0.0"
+description = "MCP server and CLI to connect local jobs to Kaggle and Google Colab."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MOON-DREAM-STARS" }]
+dependencies = [
+    "pydantic>=2",
+    "typer>=0.12",
+    "pyyaml",
+    "mcp>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+    "build",
+]
+
+[project.scripts]
+l2kc = "link2kaggle_colab.cli.main:app"
+link2kaggle-colab-mcp = "link2kaggle_colab.mcp.server:main"
+
+
+[project.urls]
+Homepage = "https://github.com/MOON-DREAM-STARS/Link2Colab-Kaggle"
+Repository = "https://github.com/MOON-DREAM-STARS/Link2Colab-Kaggle"
+Issues = "https://github.com/MOON-DREAM-STARS/Link2Colab-Kaggle/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/link2kaggle_colab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: real accounts/network, excluded by default",
+]
+addopts = '-m "not live"'
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["link2kaggle_colab"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]

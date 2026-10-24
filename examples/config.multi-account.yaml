@@ -1,0 +1,53 @@
+# Multi-account example. Mock mode. References only: no tokens, keys, or file contents.
+# Selection is deterministic. Quota, rate limits, and auth errors do not rotate
+# to another account of the same provider. That would evade the provider's limit.
+# See docs/accounts.md.
+
+mode: mock
+allow_real_jobs: false
+state_dir: ~/.l2kc
+
+accounts:
+  - id: kaggle-primary
+    provider: kaggle
+    credential_ref: kaggle-main
+    enabled: true
+    default: false
+    labels:
+      team: a
+    mock_scenario: quota_45h
+  - id: kaggle-alt
+    provider: kaggle
+    credential_ref: kaggle-alt
+    enabled: true
+    default: true
+    mock_scenario: ok
+  - id: colab-primary
+    provider: colab
+    credential_ref: colab-main
+    enabled: true
+    default: true
+    mock_scenario: ai_pro
+  - id: colab-alt
+    provider: colab
+    credential_ref: colab-alt
+    enabled: true
+    mock_scenario: free
+
+credentials:
+  kaggle-main:
+    source: kaggle_config_dir
+    path: ~/.l2kc/credentials/kaggle-main
+  kaggle-alt:
+    source: env
+    env: KAGGLE_ALT_API_TOKEN
+  colab-main:
+    source: adc_file
+    path: ~/creds/colab-main-adc.json
+  colab-alt:
+    source: colab_home
+    path: ~/.l2kc/credentials/colab-alt
+  vault-x:
+    source: keyring
+    service: l2kc
+    username: kaggle-x

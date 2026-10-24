@@ -1,0 +1,40 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# Build artifacts
+dist/
+build/
+*.egg-info
+
+# Test and lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets and credentials — never commit these
+.env
+.env.*
+*.pem
+*.key
+kaggle.json
+**/credentials*.json
+client_secret*.json
+token*.json
+application_default_credentials.json
+
+# Local data
+*.sqlite
+*.db
+.l2kc/
+
+# Kaggle access token file / OAuth caches
+access_token
+.kaggle/
+.config/
